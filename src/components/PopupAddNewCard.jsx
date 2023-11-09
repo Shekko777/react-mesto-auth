@@ -64,7 +64,7 @@ function PopupAddNewCard({name, title, buttonText, isOpen, isClose, onAddPlace, 
     if(!re.test(String(evt.target.value).toLowerCase()) && evt.target.value.length >= 1) {
       setLinkError('Некорректная ссылка')
       setLinkDirty(true)
-    } else if (evt.target.value.length == 0) {
+    } else if (evt.target.value.length === 0) {
       setLinkError('Вставьте URL картинки')
     } else {
       setLinkError('');
@@ -81,7 +81,7 @@ function PopupAddNewCard({name, title, buttonText, isOpen, isClose, onAddPlace, 
     if(evt.target.value.length > 0 && evt.target.value.length < 3) {
       setNameError('Слишком короткое название')
       setNameDirty(true)
-    } else if (evt.target.value.length == 0) {
+    } else if (evt.target.value.length === 0) {
       setNameError('Введите название картинки')
     } else {
       setNameError('')

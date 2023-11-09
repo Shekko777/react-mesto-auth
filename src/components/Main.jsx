@@ -7,9 +7,8 @@ import Card from './Card';
 import Header from "./Header";
 import Footer from "./Footer";
 
-function Main({onEditAvatar, onEditProfile, onAddPlace, onCardClick, onCardLike, onConfirmDelete, email, onSignOut}) {
+function Main({onEditAvatar, onEditProfile, onAddPlace, onCardClick, onCardLike, onConfirmDelete, email, onSignOut, cards}) {
   const currentUserContext = React.useContext(CurrentUserContext);
-  const cardsContext = React.useContext(CardsContext);
 
   return (
     <>
@@ -54,9 +53,14 @@ function Main({onEditAvatar, onEditProfile, onAddPlace, onCardClick, onCardLike,
       {/*Elements */}
       <section className="elements" aria-label="Фотокарточки">
         <ul className="elements__list">
-          {cardsContext.map(card => {
-            return <Card key={card._id} onConfirmDelete={onConfirmDelete} handleLikeClick={onCardLike} onCardClick={onCardClick} card={card} />
-        })}</ul>
+          {cards.map(card => {
+            return (
+              <li className="elements__item" key={card._id}>
+                <Card onConfirmDelete={onConfirmDelete} handleLikeClick={onCardLike} onCardClick={onCardClick} card={card} />
+              </li>
+            ) 
+          })}
+        </ul>
       </section>
     </main>
     <Footer />

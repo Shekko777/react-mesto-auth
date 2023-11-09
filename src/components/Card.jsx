@@ -12,7 +12,7 @@ export default function Card({card, onCardClick, handleLikeClick, onConfirmDelet
     elements__like ${isLiked && 'elements__like_active'}
   `
   return (
-    <li className="elements__item">
+    <>
       {isOwn && <button className="elements__button-delete" type="button" onClick={_ => {
         onConfirmDelete(card);
       }} />}
@@ -24,6 +24,6 @@ export default function Card({card, onCardClick, handleLikeClick, onConfirmDelet
           <p className="elements__counter">{card?.likes.length}</p>
         </div>
       </div>
-    </li>
+    </>
   )
 }

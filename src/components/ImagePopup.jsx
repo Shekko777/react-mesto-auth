@@ -1,6 +1,6 @@
 function ImagePopup({card, isOpen, isClose, closeTouchOverlay}) {
   return (
-    <div onClick={e => closeTouchOverlay(e)} className={isOpen ? 'popup popup-images popup_type_images popup_opened' : 'popup popup-images popup_type_images'}>
+    <div onClick={e => closeTouchOverlay(e)} className={`popup popup-images popup_type_images ${isOpen ? 'popup_opened' : ''}`}>
         <div className="popup-images__container">
           <button className="popup__close" type="button" onClick={isClose}></button>
           <figure className="popup-images__figure">

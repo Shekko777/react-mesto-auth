@@ -1,6 +1,6 @@
 class Auth {
-  constructor() {
-    this._url = "https://auth.nomoreparties.co";
+  constructor(url) {
+    this._url = url;
   }
 
   _getResponce(res) {
@@ -32,7 +32,7 @@ class Auth {
     }).then(this._getResponce);
   }
 
-  getContent(token) {
+  checkToken(token) {
     return fetch(`${this._url}/users/me`, {
       headers: {
         Accept: "application/json",
@@ -43,6 +43,8 @@ class Auth {
   }
 }
 
-const auth = new Auth();
+const url = "https://auth.nomoreparties.co";
+
+const auth = new Auth(url);
 
 export default auth;

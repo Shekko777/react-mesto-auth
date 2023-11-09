@@ -1,6 +1,6 @@
 function PopupWithForm({name, title, buttonText, isOpen, isClose, onSubmit, children, buttonStatus, closeTouchOverlay}) {
   return (
-    <div onClick={evt => closeTouchOverlay(evt)} className={isOpen ? `popup popup_${name} popup_opened` : `popup popup_${name}`}>
+    <div onClick={closeTouchOverlay} className={`popup popup_${name} ${isOpen ? "popup_opened" : ''}`}>
         <div className="popup__container">
           <button className="popup__close" type="button" onClick={isClose}></button>
           <form

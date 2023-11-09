@@ -25,7 +25,7 @@ export default function PopupEditProfile({name, title, buttonText, isOpen, isClo
     setNameError('')
     setAboutError('')
     setFormValid(false)
-  }, [isOpen])
+  }, [isOpen, currentUserContext])
 
   /*
   Хук для определения валидности формы, когда пользователь ввёл/вводит данные.
@@ -38,15 +38,6 @@ export default function PopupEditProfile({name, title, buttonText, isOpen, isClo
       setFormValid(true)
     }
   }, [userName, userDescription])
-
-  /*
-  Хук для получения данных о пользователе.
-  Если данные получены, то записывает их в стейт
-  */
-  React.useEffect(() => {
-    setUserName(currentUserContext.name);
-    setUserDescription(currentUserContext.about);
-  }, [currentUserContext]); 
 
   /*Функция отправки формы*/
   function handleSubmit(evt) {

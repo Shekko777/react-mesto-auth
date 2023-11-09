@@ -24,11 +24,11 @@ function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false); // Попап редактирования профиля
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false); // Попап добавления места
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false); // Попап аватара 
-  const [isConfirmPopup, setIsConfirmPopup] = React.useState(false); // Попап подтверждения 
-  const [isImagePopup, setIsImagePopup] = React.useState(false); // Попап картинки
+  const [isConfirmPopup, setIsConfirmPopupOpen] = React.useState(false); // Попап подтверждения 
+  const [isImagePopup, setIsImagePopupOpen] = React.useState(false); // Попап картинки
   const [isTooltipPopupOpen, setIsTooltipPopupOpen] = React.useState(false); // Состояние открытия и закрытия тултипа
   const [tooltipInfo, setTooltipInfo] = React.useState({
-    img: null,
+    img: '',
     text: '',
   }) // Информация в тултипе
   const [cards, setCards] = React.useState([]); // Массив карточек для отображения
@@ -39,57 +39,65 @@ function App() {
 
   // Функция авторизации
   const handleSubmitLogin = ({email, password}) => {
-    auth.signIn(email, password).then(res => {
-      if(res.token) {
-        localStorage.setItem('token', res.token);
-        setEmail(email);
-        getContent();
-      }
-    }).catch(err => {
-      console.log(`Ошибка при авторизации: ${err}`)
-      setTooltipInfo({
-        img: tooltipRejectImg,
-        text: 'Неверный Email или пароль! Повторите попытку.',
+    auth.signIn(email, password)
+      .then(res => {
+        if(res.token) {
+          localStorage.setItem('token', res.token);
+          setEmail(email);
+          setLoggedIn(true);
+          navigate('/', {replace: true});
+        }
       })
-      setIsTooltipPopupOpen(true);
-    })
+      .catch(err => {
+        console.log(`Ошибка при авторизации: ${err}`)
+        setTooltipInfo({
+          img: tooltipRejectImg,
+          text: 'Неверный Email или пароль! Повторите попытку.',
+        })
+        setIsTooltipPopupOpen(true);
+      })
   }
 
   // Функция регистрации
   const handleSubmitRegister = ({email, password}) => {
-    auth.signUp(email, password).then(res => {
-      if(res.statusCode !== 400) {
+    auth.signUp(email, password)
+      .then(() => {
         setTooltipInfo({
           img: tooltipResolveImg,
           text: 'Вы успешно зарегистрировались!',
         })
         setIsTooltipPopupOpen(true);
         navigate('/sign-in', {replace: true});
-      }
-    }).catch(err => {
-      console.log(`Ошибка при регистрации: ${err}`)
-      setTooltipInfo({
-        img: tooltipRejectImg,
-        text: 'Что-то пошло не так! Попробуйте ещё раз.',
       })
-      setIsTooltipPopupOpen(true);
-    })
+      .catch(err => {
+        console.log(`Ошибка при регистрации: ${err}`)
+        setTooltipInfo({
+          img: tooltipRejectImg,
+          text: 'Что-то пошло не так! Попробуйте ещё раз.',
+        })
+        setIsTooltipPopupOpen(true);
+      })
   }
 
   // Функция выхода из профиля 
   const handleSignOut = () => {
     setLoggedIn(false);
     localStorage.removeItem('token');
+    setEmail('');
   }
 
   // Функция получения карточек и перехода на главную страницу
-  const getContent = () => {
-    const token = localStorage.getItem('token')
-    auth.getContent(token).then(res => {
-      navigate('/', {replace: true});
-      setLoggedIn(true);
-      setEmail(res.data.email);
-    }).catch(err => console.log(`Вы не зарегистрированны: ${err}`))
+  const checkToken = () => {
+    const token = localStorage.getItem('token');
+    if(token) {
+      auth.checkToken(token)
+        .then(res => {
+          navigate('/', {replace: true});
+          setLoggedIn(true);
+          setEmail(res.data.email);
+        })
+        .catch(err => console.log(`Вы не зарегистрированны: ${err}`))
+    }
   }
 
    /*
@@ -127,7 +135,7 @@ function App() {
     2) Стейт, который нужно обновить
   */
   function handleConfirmPopup(card) {
-    setIsConfirmPopup(true);
+    setIsConfirmPopupOpen(true);
     setSelectedCard(card);
   }
   /*
@@ -138,7 +146,6 @@ function App() {
     3) После срабатывания закрывает попапы 
   */
   function handleSubmitConfirm(evt) {
-    evt.preventDefault();
     handleCardDelete(selectedCard);
     handleCloseAllPopup();
   }
@@ -148,8 +155,8 @@ function App() {
     setIsEditProfilePopupOpen(false);
     setIsAddPlacePopupOpen(false);
     setIsEditAvatarPopupOpen(false);
-    setIsImagePopup(false);
-    setIsConfirmPopup(false);
+    setIsImagePopupOpen(false);
+    setIsConfirmPopupOpen(false);
     setIsTooltipPopupOpen(false)
     setSelectedCard(null);
   }
@@ -164,7 +171,7 @@ function App() {
   /* Функция открытия картинки в попапе */
   function handleCardClick(card) {
     setSelectedCard(card);
-    setIsImagePopup(!isImagePopup);
+    setIsImagePopupOpen(!isImagePopup);
   }
 
   // API лайк карточки
@@ -221,18 +228,24 @@ function App() {
     2) Загружается массив карточек в стейт для их начального рендера 
   */
   React.useEffect(() => {
-    Promise.all([api.getUserInfo(), api.getCards()])
-    .then(([dataUser, dataCards]) => {
-      setCurrentUser({
-        about: dataUser.about,
-        name: dataUser.name,
-        id: dataUser._id,
-        avatar: dataUser.avatar, 
-      });
-      setCards(dataCards)
-    }).catch(err => console.log(`Oops: Не удалось получить данные, ошибка: ${err}`));
-    getContent(); // Проверка авторизованности при заходе на сайт
-  }, []);
+    if (loggedIn) {
+      Promise.all([api.getUserInfo(), api.getCards()])
+      .then(([dataUser, dataCards]) => {
+        setCurrentUser({
+          about: dataUser.about,
+          name: dataUser.name,
+          id: dataUser._id,
+          avatar: dataUser.avatar, 
+        });
+        setCards(dataCards)
+      }).catch(err => console.log(`Oops: Не удалось получить данные, ошибка: ${err}`));
+    }
+  }, [loggedIn]);
+  
+  // Провверка токЕна при входе на  сайт
+  React.useEffect(() => {
+    checkToken(); 
+  }, [])
 
   /*
   Монтирование еффекта
@@ -259,8 +272,6 @@ function App() {
       {/* <!-- HEADER --> */}
 
       <CurrentUserContext.Provider value={currentUser}>
-        <CardsContext.Provider value={cards}>
-
           <Routes>
 
             <Route path="/" element={<ProtectedRoute component={Main} loggedIn={loggedIn} onEditProfile={handleEditProfileClick} 
@@ -270,20 +281,15 @@ function App() {
               onCardLike={handleCardLike}
               onConfirmDelete={handleConfirmPopup}
               email={email}
-              onSignOut={handleSignOut} />} />
+              onSignOut={handleSignOut}
+              cards={cards} />} />
 
             <Route path="/sign-up" element={
-              <Register labelText="Регистрация" 
-              buttonText="Зарегистрироваться" 
-              handleRegister={handleSubmitRegister}
-              />
+              <Register handleRegister={handleSubmitRegister}/>
             } />
 
             <Route path="/sign-in" element={
-              <Login labelText="Вход"
-              buttonText="Войти"
-              onLogin={handleSubmitLogin}
-              />
+              <Login onLogin={handleSubmitLogin}/>
             } />
 
 
@@ -291,24 +297,66 @@ function App() {
           </Routes>
 
           {/* Попап редактирования профиля */}
-          <PopupEditProfile closeTouchOverlay={handleClosePopupTouchOverlay} onUpdateUser={handleUpdateUser} name="type_edit" title="Редактировать профиль" buttonText="Сохранить" isOpen={isEditProfilePopupOpen} isClose={handleCloseAllPopup} />
+          <PopupEditProfile
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          onUpdateUser={handleUpdateUser} 
+          name="type_edit" 
+          title="Редактировать профиль" 
+          buttonText="Сохранить" 
+          isOpen={isEditProfilePopupOpen} 
+          isClose={handleCloseAllPopup} 
+          />
 
           {/* Попап добавления карточек */}
-          <PopupAddNewCard closeTouchOverlay={handleClosePopupTouchOverlay} onAddPlace={handleAddPlaceSubmit} name="type_add" title="Новое место" buttonText="Создать" isOpen={isAddPlacePopupOpen} isClose={handleCloseAllPopup}/>
+          <PopupAddNewCard 
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          onAddPlace={handleAddPlaceSubmit} 
+          name="type_add" 
+          title="Новое место" 
+          buttonText="Создать" 
+          isOpen={isAddPlacePopupOpen} 
+          isClose={handleCloseAllPopup}
+          />
 
           {/* Попап подтверждения */}
-          <PopupWithConfirm onSubmit={handleSubmitConfirm} closeTouchOverlay={handleClosePopupTouchOverlay} name="type_delete" title="Вы уверены?" buttonText='Да' isOpen={isConfirmPopup} isClose={handleCloseAllPopup}/>
+          <PopupWithConfirm 
+          onSubmit={handleSubmitConfirm} 
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          name="type_delete" 
+          title="Вы уверены?" 
+          buttonText='Да' 
+          isOpen={isConfirmPopup} 
+          isClose={handleCloseAllPopup}
+          />
 
           {/* Попап аватара */}
-          <PopupEditAvatar closeTouchOverlay={handleClosePopupTouchOverlay} onUpdateAvatar={handleUpdateAvatar} name="tupe_avatar" title="Обновить аватар" buttonText="Сохранить" isOpen={isEditAvatarPopupOpen} isClose={handleCloseAllPopup} />
+          <PopupEditAvatar 
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          onUpdateAvatar={handleUpdateAvatar} 
+          name="tupe_avatar" 
+          title="Обновить аватар" 
+          buttonText="Сохранить" 
+          isOpen={isEditAvatarPopupOpen} 
+          isClose={handleCloseAllPopup} 
+          />
 
           {/* Попап с картинкой */}
-          <ImagePopup closeTouchOverlay={handleClosePopupTouchOverlay} card={selectedCard} isOpen={isImagePopup} isClose={handleCloseAllPopup} />
+          <ImagePopup 
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          card={selectedCard} 
+          isOpen={isImagePopup} 
+          isClose={handleCloseAllPopup} 
+          />
 
           {/* InfoTooltip */}
-          <InfoTooltip closeTouchOverlay={handleClosePopupTouchOverlay} img={tooltipInfo.img} text={tooltipInfo.text} isOpen={isTooltipPopupOpen} isClose={handleCloseAllPopup} />
+          <InfoTooltip 
+          closeTouchOverlay={handleClosePopupTouchOverlay} 
+          img={tooltipInfo.img} 
+          text={tooltipInfo.text} 
+          isOpen={isTooltipPopupOpen} 
+          isClose={handleCloseAllPopup} 
+          />
 
-        </CardsContext.Provider> 
       </CurrentUserContext.Provider>
       
     </>

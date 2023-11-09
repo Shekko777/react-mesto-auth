@@ -70,7 +70,6 @@ export default function PopupEditAvatar({name, title, buttonText, isOpen, isClos
     onUpdateAvatar({
       avatar: userAvatar,
     })
-    setUserAvatar('');
   }
 
   return (
